@@ -14,6 +14,10 @@ a.name in
 ('total PGA inuse','total PGA allocated','maximum PGA allocated','aggregate PGA target parameter','bytes processed','PGA memory freed back to OS')
 order by 1,3;
 
+################################################################################################################################################
+Tablespace specific queries
+################################################################################################################################################
+
 Tablespace Details
 -----------------------
 
@@ -93,3 +97,126 @@ where
 a.file_id=b.file# and
 a.TABLESPACE_NAME='&TBS' order by 1;
 
+################################################################################################################################################
+Parent/Child Tables specific queries
+################################################################################################################################################
+
+Get Constraint of Table
+-------------------------------------
+
+col R_OWNER for a10
+col INDEX_OWNER for a10 head I_OWNER
+col INDEX_NAME for a12
+col TABLE_NAME for a12
+select TABLE_NAME,OWNER,CONSTRAINT_TYPE,R_OWNER,R_CONSTRAINT_NAME,DELETE_RULE,STATUS,DEFERRABLE,DEFERRED,VALIDATED,INDEX_OWNER,INDEX_NAME,INVALID 
+from dba_constraints
+where table_name='&TABLE'
+order by owner;
+
+Count of User Child Tables on Database
+----------------------------------------
+
+SELECT
+      p.owner parent_owner,
+      p.table_name Parent_table,
+      count(*) as Child_tables
+  FROM
+      dba_constraints p, dba_constraints c
+  where
+  p.owner not in ('SYS','SYSTEM','SYSMAN','ORDDATA','OLAPSYS','MDSYS','EXFSYS','APEX_030200','CTXSYS','DBSNMP','FLOWS_FILES')
+  and p.constraint_type IN ('P','U')
+  and c.constraint_type='R'
+  and p.owner=c.r_owner
+  and p.constraint_name=c.r_constraint_name
+group by p.owner,p.table_name
+order by 1,3;
+
+Check ALL Parent/Child Tables of Any schema
+----------------------------------------------
+
+SELECT
+      p.owner parent_owner,
+      c.owner child_owner,
+      p.table_name Parent_table,
+      p.constraint_name parent_cons_name,
+      c.table_name Child_table,
+      c.constraint_name child_cons_name
+  FROM
+      dba_constraints p, dba_constraints c
+  where p.owner='&parent_Owner'
+  and p.constraint_type IN ('P','U')
+  and c.constraint_type='R'
+  and p.owner=c.r_owner
+  and p.constraint_name=c.r_constraint_name
+order by 3;
+
+Get Child Table details from Parent Table
+------------------------------------------------
+
+col COLUMN_NAME for a20
+col TABLE_OWNER for a10 head T_OWNER
+col CHILD_TABLE for a12
+SELECT c.table_owner,a.table_name,c.column_name, b.table_name AS CHILD_TABLE, d.column_name, b.R_CONSTRAINT_NAME 
+FROM dba_constraints a, dba_constraints b, dba_ind_columns c, dba_cons_columns d 
+WHERE a.constraint_type = 'P' 
+AND a.CONSTRAINT_NAME = b.R_CONSTRAINT_NAME 
+AND b.CONSTRAINT_TYPE = 'R' 
+AND a.table_name = c.table_name 
+AND a.constraint_name = c.index_name 
+AND b.CONSTRAINT_NAME = d.constraint_name 
+AND a.table_name = '&ParentTable';
+
+Check Best Details on Parent/Child Tables
+------------------------------------------------
+
+SET LINES 300 VERIFY OFF
+col parent_owner format A13
+col child_owner format A13
+col parent_table format A25
+col child_table format A15
+col parent_cons_name format A25
+col child_cons_name format A25
+SELECT
+      p.owner parent_owner,
+      c.owner child_owner,
+      p.table_name Parent_table,
+      p.constraint_name parent_cons_name,
+      c.table_name Child_table,
+      c.constraint_name child_cons_name
+  FROM
+      dba_constraints p, dba_constraints c
+  where p.owner='&parent_Owner'
+  and p.table_name='&Parent_Table_Name'
+  and p.constraint_type IN ('P','U')
+  and c.constraint_type='R'
+  and p.owner=c.r_owner
+  and p.constraint_name=c.r_constraint_name
+order by 4;
+
+
+ALL Parent/Child tables in database
+-------------------------------------------
+
+SET LINES 300 VERIFY OFF
+col parent_owner format A13
+col child_owner format A13
+col parent_table format A37
+col child_table format A40
+col parent_cons_name format A40
+col child_cons_name format A40
+SELECT
+      p.owner parent_owner,
+      c.owner child_owner,
+      p.table_name Parent_table,
+      p.constraint_name parent_cons_name,
+      c.table_name Child_table,
+      c.constraint_name child_cons_name
+  FROM
+      dba_constraints p, dba_constraints c
+  where
+  p.owner not in ('SYS','SYSTEM','SYSMAN','ORDDATA','OLAPSYS','MDSYS','EXFSYS','APEX_030200','CTXSYS','DBSNMP','FLOWS_FILES')
+  and p.constraint_type IN ('P','U')
+  and c.constraint_type='R'
+  and p.owner=c.r_owner
+  and p.constraint_name=c.r_constraint_name
+order by 1,3;
