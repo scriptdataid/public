@@ -14,6 +14,164 @@ a.name in
 ('total PGA inuse','total PGA allocated','maximum PGA allocated','aggregate PGA target parameter','bytes processed','PGA memory freed back to OS')
 order by 1,3;
 
+ASH Emergency Flush info
+------------------------------
+
+select TOTAL_SIZE/1024/1024 SIZEMB,SAMPLING_INTERVAL,SAMPLE_COUNT,SAMPLED_BYTES/1024/1024 SAM_MB,
+SAMPLER_ELAPSED_TIME SAM_ET,AWR_FLUSH_BYTES/1024/1024 FLSH_MB,AWR_FLUSH_ELAPSED_TIME FLSH_ET,AWR_FLUSH_COUNT,AWR_FLUSH_EMERGENCY_COUNT EF_COUNT 
+from v$ash_info;
+
+DB Valid Parameters
+-------------------------
+
+col VALUE for a20
+col NAME for a40
+select * from V$PARAMETER_VALID_VALUES order by 2,3;
+
+-- Check Obsolete parameters
+
+select * from V$OBSOLETE_PARAMETER where ISSPECIFIED='TRUE';
+
+Check Object and Linked Priv
+---------------------------------
+
+select * from V$OBJECT_PRIVILEGE order by 1;
+
+Resource Plan
+------------------
+
+-- Check grante resource to Users:
+
+SELECT * FROM dba_rsrc_consumer_group_privs;
+
+-- Check all Resource Groups:
+
+col COMMENTS for a100
+SELECT plan,status,comments FROM dba_rsrc_plans;
+
+-- Check Resourec Group CPU usage
+
+SELECT name, CPU_METHOD,active_sessions, queue_length,
+  consumed_cpu_time, cpu_waits, cpu_wait_time
+  FROM v$rsrc_consumer_group;
+
+select consumer_group, cpu_method, status,mandatory
+ from dba_rsrc_consumer_groups;
+ 
+ 
+select begin_time,
+       consumer_group_name,
+       cpu_consumed_time,
+       cpu_wait_time
+from   v$rsrcmgrmetric_history
+order by begin_time; 
+
+--- Current Active Plan
+
+select id,NAME,IS_TOP_PLAN,CPU_MANAGED,INSTANCE_CAGING from v$rsrc_plan;
+
+Wrap Code
+-------------
+
+-- Only wrap below codes:
+
+CREATE [OR REPLACE] FUNCTION function_name
+CREATE [OR REPLACE] PROCEDURE procedure_name
+CREATE [OR REPLACE] PACKAGE package_name
+CREATE [OR REPLACE] PACKAGE BODY package_name
+CREATE [OR REPLACE] TYPE type_name ... OBJECT
+CREATE [OR REPLACE] TYPE BODY type_name
+
+wrap iname=input_file [oname=output_file]
+
+wrap iname=db.sql
+
+drop Procedure SAMPLE;
+
+create Procedure SAMPLE is
+begin
+execute immediate 'select name from v$database';
+end;
+/
+
+wrap iname=s1.sql
+
+-- to unwrap , goto https://codecrete.net/UnwrapIt/ 
+and past wrapped code.
+
+Heavily Parsed SQL
+----------------------
+
+col sql_text for a120
+select * from (SELECT SQL_TEXT, PARSE_CALLS, EXECUTIONS
+FROM V$SQLAREA
+ORDER BY PARSE_CALLS desc)
+where rownum < 21;
+
+High Buffer Gets SQL
+----------------------
+
+SELECT ADDRESS, HASH_VALUE, BUFFER_GETS, EXECUTIONS, 
+BUFFER_GETS/EXECUTIONS "GETS/EXEC", SQL_TEXT
+FROM V$SQLAREA 
+WHERE BUFFER_GETS > 50000 
+AND EXECUTIONS > 0
+ORDER BY 3;
+
+SELECT SQL_TEXT 
+FROM V$SQLTEXT
+WHERE 
+ADDRESS='&ADDRESS_WANTED'
+AND HASH_VALUe=&HASH_VALUE
+ORDER BY piece;
+
+High CPU Consuming SESSION_EVENT
+-------------------------------------
+
+-- CPU itilization is commulative , Hence it will be high for long running sessions
+-- For better data , need to filter in between snapshots
+
+SELECT v.SID, SUBSTR(s.NAME,1,30) "Statistic", v.VALUE
+FROM V$STATNAME s, V$SESSTAT v
+WHERE s.NAME = 'CPU used by this session'
+AND v.STATISTIC# = s.STATISTIC#
+AND v.VALUE > 0
+ORDER BY 3;
+
+Tune Buffer
+----------------
+
+select 
+1+(select value from V$SYSSTAT where name='free buffer inspected')/(select value from V$SYSSTAT where name='free buffer requested') as "AVG_BUFF_SCAN" 
+from dual;
+
+On average, you would expect to see 1 or 2 buffers scanned. If more than this number are being scanned, then increase the size of the buffer cache or tune the DBWn process(es).
+
+select 
+(select value from V$SYSSTAT where name='dirty buffer inspected')/(select value from V$SYSSTAT where name='free buffer inspected') as "DIRTY_BUFFER" 
+from dual;
+
+If many dirty buffers exist, then possibly the DBWn process(es) cannot keep up. Again, increase the buffer cache size or tune the DBWn process.
+
+
+select EVENT,TOTAL_WAITS,TOTAL_TIMEOUTS,TIME_WAITED,AVERAGE_WAIT,TIME_WAITED_MICRO,TOTAL_WAITS_FG,TOTAL_TIMEOUTS_FG,TIME_WAITED_FG,AVERAGE_WAIT_FG,TIME_WAITED_MICRO_FG,WAIT_CLASS
+from V$SYSTEM_EVENT 
+where WAIT_CLASS <> 'Idle'
+order by 1;
+
+select * from (select "WHERE",SLEEP_COUNT,count(*) from V$LATCH_MISSES group by "WHERE",SLEEP_COUNT order by 2 desc) where rownum < 11;
+
+Library cache locks
+--------------------------
+
+[Solution] This feature provides system security, 
+but also introduces bugs. 
+The most powerful feature of Oracle is that almost all functions and features have corresponding switches, 
+by setting EVENTS 28401, you can disable password delay verification and restart the database.
+
+ALTER SYSTEM SET EVENT = '28401 TRACE NAME CONTEXT FOREVER, LEVEL 1' SCOPE = SPFILE;
+
+
 ################################################################################################################################################
 Tablespace specific queries
 ################################################################################################################################################
@@ -220,3 +378,23 @@ SELECT
   and p.owner=c.r_owner
   and p.constraint_name=c.r_constraint_name
 order by 1,3;
+
+###########################################################################################################################################
+Misc
+###########################################################################################################################################
+
+ku$_table_data_view -> ku$_htable_data_view -> KU$_HTABLE_DATA_VIEW -> objid from tab$ -> dbms_metadata_util.block_estimate -> ku$_htable_bytes_alloc_view -> KU$_BYTES_ALLOC_VIEW -> KU$_STORAGE_VIEW -> seg$
+
+###########################################################################################################################################
+OS Related
+###########################################################################################################################################
+Linux Related
+-------------------
+
+/etc/init.d/network restart
+
+Windows
+--------------------------
+Dumps:
+
+C:\Windows\Minidump
