@@ -1,0 +1,16 @@
+
+PGA HIST 
+------------
+
+col NAME for a40
+col DATE_TIME for a20
+prompt Enter Start and end time in DD-MON-YYYY HH24:MI format
+select a.SNAP_ID,to_char(b.BEGIN_INTERVAL_TIME,'DD-MON-YYYY HH24:MI:SS') DATE_TIME,a.NAME,a.VALUE/1024/1024 MB
+from DBA_HIST_PGASTAT a,DBA_HIST_SNAPSHOT b
+where 
+a.snap_id=b.snap_id and
+to_char(b.BEGIN_INTERVAL_TIME,'DD-MON-YYYY HH24:MI') between '&START_TIME' and '&END_TIME' and 
+a.name in
+('total PGA inuse','total PGA allocated','maximum PGA allocated','aggregate PGA target parameter','bytes processed','PGA memory freed back to OS')
+order by 1,3;
+
