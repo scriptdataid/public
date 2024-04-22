@@ -539,6 +539,35 @@ END;
 Commit;
 
 
+	
+Copyright (c) 2024, Oracle. All rights reserved. Oracle Confidential.
+
+
+Click to add to Favorites		Export and Import ACLs using expdp/impdp (Doc ID 2483123.1)	To BottomTo Bottom	
+
+In this Document
+Goal
+Solution
+
+APPLIES TO:
+Oracle Database - Enterprise Edition - Version 12.1.0.2 and later
+Information in this document applies to any platform.
+GOAL
+ How to export and import ACLs when performing a full database export/import?
+
+SOLUTION
+Starting from 12c,we can also export ACLs using INCLUDE=NETWORK_ACL parameter of expdp command:
+
+expdp <user/password> directory=DATA_PUMP_DIR logfile=log_export_network_acl.log dumpfile=export_network_acl.dmp full=y include=NETWORK_ACL
+
+expdp / directory=EXPORTS dumpfile=exp_network_acl.dmp logfile=exp_network_acl.log reuse_dumpfiles=yes full=y include=NETWORK_ACL
+
+impdp <user/password> directory=DATA_PUMP_DIR logfile=log_import_network_acl.log dumpfile=export_network_acl.dmp 
+
+ 
+
+This feature does not exist in 11g.
+
 SQLNET Parameters
 ======================
 
