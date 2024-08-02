@@ -3162,18 +3162,6 @@ from v$session vs, v$process vp
 where   vs.paddr=vp.addr
 and vp.spid in (&spid) order by vs.logon_time;
 
-Restore Archive
-=================
-
-run
-{
-  allocate channel c1 type 'sbt_tape';
-  set archivelog destination to '/big_space/arch';
-  restore archivelog from sequence 109056 until sequence 109118 thread 1;
-  release channel c1;
-}
-
-
 
 ASH Emergency Flush info
 ------------------------------
