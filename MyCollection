@@ -1,3 +1,47 @@
+HWM
+------------
+
+set verify off
+column file_name format a50 word_wrapped
+column smallest format 999,990 heading "Smallest|Size|Poss."
+column currsize format 999,990 heading "Current|Size"
+column savings  format 999,990 heading "Poss.|Savings"
+break on report
+col value for a10
+compute sum of savings on report
+column value new_val blksize
+select value from v$parameter where name = 'db_block_size';
+/
+select file_name,
+       ceil( (nvl(hwm,1)*&&blksize)/1024/1024 ) smallest,
+       ceil( blocks*&&blksize/1024/1024) currsize,
+       ceil( blocks*&&blksize/1024/1024) -
+       ceil( (nvl(hwm,1)*&&blksize)/1024/1024 ) savings
+from dba_data_files a,
+     ( select file_id, max(block_id+blocks-1) hwm
+         from dba_extents
+        group by file_id ) b
+where a.file_id = b.file_id(+) order by savings desc
+/
+
+or
+
+set linesize 400
+col tablespace_name format a25
+col file_size format 99999
+col file_name format a50
+col hwm format 99999
+col can_save format 99999
+SELECT tablespace_name, file_name, file_size, hwm, file_size-hwm can_save
+FROM (SELECT /*+ RULE */ ddf.tablespace_name, ddf.file_name file_name,
+ddf.bytes/1048576 file_size,(ebf.maximum + de.blocks-1)*dbs.db_block_size/1048576 hwm
+FROM dba_data_files ddf,(SELECT file_id, MAX(block_id) maximum FROM dba_extents GROUP BY file_id) ebf,dba_extents de,
+(SELECT value db_block_size FROM v$parameter WHERE name='db_block_size') dbs
+WHERE ddf.file_id = ebf.file_id
+AND de.file_id = ebf.file_id
+AND de.block_id = ebf.maximum
+ORDER BY 1,2);
+
 
 PGA HIST 
 ------------
