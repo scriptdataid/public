@@ -3775,6 +3775,17 @@ AND a.constraint_name = c.index_name
 AND b.CONSTRAINT_NAME = d.constraint_name 
 AND a.table_name = '&ParentTable';
 
+col CONSTRAINT_NAME for a35
+SELECT c.table_owner Parent_owner,a.table_name,c.column_name, b.owner child_owner,b.table_name AS CHILD_TABLE, d.column_name, b.CONSTRAINT_NAME,b.R_CONSTRAINT_NAME 
+FROM dba_constraints a, dba_constraints b, dba_ind_columns c, dba_cons_columns d 
+WHERE a.constraint_type in ('P' ,'U')
+AND a.CONSTRAINT_NAME = b.R_CONSTRAINT_NAME 
+AND b.CONSTRAINT_TYPE = 'R' 
+AND a.table_name = c.table_name 
+AND a.constraint_name = c.index_name 
+AND b.CONSTRAINT_NAME = d.constraint_name 
+AND a.table_name = '&ParentTable';
+
 Check Best Details on Parent/Child Tables
 ------------------------------------------------
 
