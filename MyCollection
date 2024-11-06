@@ -144,43 +144,6 @@ where ACCOUNT_STATUS='OPEN'
 and REGEXP_LIKE (USERNAME,'^[a-zA-Z_]*$') 
 and EXPIRY_DATE between sysdate and sysdate+7 
 order by EXPIRY_DATE;
-
-User Details with Profile Specs
-===================================
-
-col SERVER_NAME for a15
-col Database_name for a15
-col USERNAME for a30
-col ACCOUNT_STATUS for a35
-col PROFILE for a25
-col CONNECT_TIME for a15
-col IDLE_TIME for a15
-col PASSWORD_LIFE_TIME for a20
-SET COLSEP |
-SET LINES 200 pages 49999
-WITH P_CON as (
-select profile,limit CONNECT_TIME from dba_profiles where resource_name='CONNECT_TIME'
-order by 1), P_IT as (
-select profile,limit IDLE_TIME from dba_profiles where resource_name='IDLE_TIME'
-order by 1), P_LT as (
-select profile,limit PASSWORD_LIFE_TIME from dba_profiles where resource_name='PASSWORD_LIFE_TIME'
-order by 1)
-select (select host_name from v$instance) SERVER_NAME,(select name from v$database) Database_name,
-d.username,d.account_status,d.created,d.profile,a.CONNECT_TIME,b.IDLE_TIME,c.PASSWORD_LIFE_TIME from dba_users d,P_CON a,P_IT b,P_LT c
-where d.username not in
-('GSMROOTUSER','APEX_180200','APEX_040200','APEX_INSTANCE_ADMIN_USER','OJVMSYS','SYS$UMF','REMOTE_SCHEDULER_AGENT',
-'SYSBACKUP','SYSDG','SYSKM','SYSRAC','AUDSYS','DBSFWUSER','DVF','DVSYS','GGSYS','GSMADMIN_INTERNAL','GSMCATUSER','GSMUSER',
-'LBACSYS','ANONYMOUS','APEX_030200','APEX_PUBLIC_USER','APPQOSSYS','BI','CTXSYS','DBSNMP','DIP','EXFSYS','FLOWS_FILES','HR','IX',
-'MDDATA','MDSYS','MGMT_VIEW','OE','OLAPSYS','ORACLE_OCM','ORDDATA','ORDPLUGINS','ORDSYS','OUTLN','OWBSYS','OWBSYS_AUDIT','PM',
-'SCOTT','SH','SI_INFORMTN_SCHEMA','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SYS','SYSMAN','SYSTEM','WMSYS','XDB','XS$NULL','DMSYS','DBA',
-'DATAPUMP_IMP_FULL_DATABASE','DATAPUMP_EXP_FULL_DATABASE','IMP_FULL_DATABASE','JAVASYSPRIV','LOGSTDBY_ADMINISTRATOR','SQLTXADMIN',
-'SELECT_CATALOG_ROLE','SQLTXPLAIN')
-and d.profile=a.profile
-and a.profile=b.profile 
-and b.profile=c.profile
-order by d.username,d.profile;
-
-
 Pass_reset
 ===============
 
@@ -580,8 +543,6 @@ DBMS_NETWORK_ACL_ADMIN.UNASSIGN_ACL(host => 'www.us.oracle.com');
 END;
 /
 Commit;
-
-
 	
 Copyright (c) 2024, Oracle. All rights reserved. Oracle Confidential.
 
@@ -607,19 +568,12 @@ expdp / directory=EXPORTS dumpfile=exp_network_acl.dmp logfile=exp_network_acl.l
 
 impdp <user/password> directory=DATA_PUMP_DIR logfile=log_import_network_acl.log dumpfile=export_network_acl.dmp 
 
- 
-
 This feature does not exist in 11g.
 
 SQLNET Parameters
 ======================
 
 SQLNET.ALLOWED_LOGON_VERSION_SERVER=8
-
-Query Issues
-==============
-
-SR20 : 507hq9u5c7rp9
 
 Password_File:
 ====================
@@ -685,7 +639,6 @@ col operation format a12
 col job_mode format a20
 SELECT owner_name, job_name, operation, job_mode, state FROM dba_datapump_jobs where state='EXECUTING';
 
-
 SELECT OPNAME, SID, SERIAL#, CONTEXT, SOFAR, TOTALWORK,ROUND(SOFAR/TOTALWORK*100,2) "%_COMPLETE"
 FROM V$SESSION_LONGOPS WHERE OPNAME in(select d.job_name from v$session s, v$process p, dba_datapump_sessions d
 where p.addr=s.paddr and s.saddr=d.saddr) AND OPNAME NOT LIKE '%aggregate%' AND TOTALWORK != 0 AND SOFAR <> TOTALWORK;
@@ -702,9 +655,6 @@ FROM v$sess_io io,v$session v
 WHERE io.SID=v.SID AND v.saddr IN (SELECT saddr FROM dba_datapump_sessions) 
 ORDER BY io.BLOCK_CHANGES;
 
-
-
-
 COLUMN opname FORMAT A20
 COLUMN target_desc FORMAT A20
 COLUMN units FORMAT A10
@@ -718,8 +668,6 @@ SELECT
     units
 FROM  
    v$session_longops where sid='1530';
-
-
 
 Check object_acess with full details:-
 ======================================
@@ -1521,7 +1469,6 @@ Restore Stats
 
 execute dbms_stats.restore_table_stats('MULDMS','GM_FINANCER', sysdate-1);
 
-
 Import Stats from BKP tables
 ==============================
 
@@ -1894,8 +1841,6 @@ col REFERENCED_NAME for a20
 col REFERENCED_LINK_NAME for a30
 col DEPENDENCY_TYPE for a20
 select OWNER,NAME,TYPE,REFERENCED_OWNER,REFERENCED_NAME,REFERENCED_TYPE,REFERENCED_LINK_NAME,DEPENDENCY_TYPE from dba_dependencies where REFERENCED_NAME='SPRD_ENGI';
-
-
 
 set lines 200 pages 9999
 col NAME for a30
@@ -2387,15 +2332,12 @@ select sid,osuser,username,program,CLIENT_INFO,sql_id,prev_sql_id,logon_time,eve
 
 TraceEnable/Disable
 ======================
-
 Trace enable
-
 
        SID    SERIAL# USERNAME   LOGON_TIME          STATUS   STATE          SQL_ID        PREV_SQL_ID   EVENT                             P1     ET_Min
 ---------- ---------- ---------- ------------------- -------- -------------- ------------- ------------- ------------------------- ---------- ----------
        843       1233 523640     18-12-2020 17:56:17 ACTIVE   WAITING        chx99hax15q6y 3az7svcyypum2 SQL*Net message from dbli  675562835          0
  
-
 SPID
 ------------------------
 15008380
@@ -2404,7 +2346,6 @@ oradebug setospid 8638
 oradebug unlimit
 oradebug event 10046 trace name context forever,level 12
 oradebug tracefile_name
-
 
 -- Disable Tracing
 
@@ -2507,7 +2448,6 @@ and s.final_blocking_session = bs.sid (+))
 ORDER BY chain_id,
  num_waiters DESC)
 WHERE ROWNUM < 101;
-
 
 SQL Execution History
 =======================
@@ -2720,7 +2660,6 @@ substr(s.MACHINE,1,10) Machine
     and status ='ACTIVE'
     and s.LAST_CALL_ET > 5 * 60
     order by 10 ;
-
 
 Check Users
 ============
@@ -3053,7 +2992,6 @@ Package create for SR
 adrci> ips create package problem 2 correlate all
 adrci> ips generate package 1 in "/tmp"
 ls /tmp/IPSPKG*.zip
-
 
 DIA-49803: Purge not possible due to incompatible schema version
 
@@ -3404,7 +3342,6 @@ col PARAMETER for a25
 select * from NLS_DATABASE_PARAMETERS 
 where parameter in('NLS_NCHAR_CHARACTERSET','NLS_CHARACTERSET');
 
-
 =============
 user expiry check
 ==================
@@ -3417,7 +3354,6 @@ col PROFILE for a15;
 col PASSWORD for a20;
 select USERNAME,PASSWORD,ACCOUNT_STATUS,DEFAULT_TABLESPACE,PROFILE,LOCK_DATE,EXPIRY_DATE from dba_users where USERNAME='FAI00BADM'
 order by EXPIRY_DATE;
-
 
 CTL Records
 ======================
@@ -3465,7 +3401,6 @@ select 'CURRENT PLSQL', vs.username, d_o.object_name,vs.sid,vs.serial#,vs.event,
        inner join
        v$session vs
           on d_o.object_id = vs.plsql_object_id;
-
 
 ################################################################################################################################################
 Tablespace specific queries
@@ -3623,7 +3558,6 @@ order by 4;
 set feed on
 set veri on
 
-
 Top20 Segments
 ========================
 
@@ -3703,8 +3637,6 @@ FROM dba_data_files a,
 WHERE a.file_id = b.file_id
 and a.tablespace_name='&Tablespace'
 order by file_name;
-
-
 
 ################################################################################################################################################
 Parent/Child Tables specific queries
