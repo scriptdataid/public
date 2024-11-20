@@ -1,3 +1,23 @@
+Fragmentation
+--------------
+
+-- Index Frgamentation:
+ 
+ANALYZE INDEX index_name VALIDATE STRUCTURE;
+ 
+select round((del_lf_rows/lf_rows)*100,2) ratio, height, lf_blks, lf_rows 
+  from index_stats;
+
+-- Table Frgamentation:
+ 
+select owner, table_name,round((blocks*8),2)/1024 "size (mb)" , 
+round(((num_rows*avg_row_len)/1024/1024),2) "actual_data (mb)", 
+(round((blocks*8),2)/1024 - round(((num_rows*avg_row_len)/1024/1024),2)) "wasted_space (mb)" 
+from dba_tables 
+where 
+(round((blocks*8),2)/1024 > round(((num_rows*avg_row_len)/1024/1024),2)) 
+order by 4;
+
 HWM
 ------------
 
