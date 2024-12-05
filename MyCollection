@@ -1,3 +1,10 @@
+set lines 999 pages 999
+col NAME for a80
+select THREAD#,SEQUENCE#,NAME,(BLOCKS*BLOCK_SIZE)/1024/1024 MB from v$archived_log
+where thread#=3 and CREATOR <> 'LGWR' and name is not null and name like '+NMS_FLASH1%'
+and SEQUENCE# between 216660 and 216673
+order by 1,2;
+
 Fragmentation
 --------------
 
