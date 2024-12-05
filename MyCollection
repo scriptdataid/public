@@ -1,3 +1,6 @@
+Get Archivelog Size:
+----------------------
+
 set lines 999 pages 999
 col NAME for a80
 select THREAD#,SEQUENCE#,NAME,(BLOCKS*BLOCK_SIZE)/1024/1024 MB from v$archived_log
