@@ -1,3 +1,307 @@
+SQL> @dbn
+
+NAME      DB_UNIQUE_NAME                 PROTECTION_MODE      OPEN_MODE            LOG_MODE     DATABASE_ROLE    STARTUP_T CURRENT_T HOST_NAME
+--------- ------------------------------ -------------------- -------------------- ------------ ---------------- --------- --------- --------------------
+PRTMX01   PRTMX01                        MAXIMUM PERFORMANCE  READ WRITE           ARCHIVELOG   PRIMARY          14-MAR-24 14-MAR-24 MSILPETCSR17PR
+
+SQL> select tz_version from registry$database;
+
+TZ_VERSION
+----------
+        32
+
+SQL> !vi tz.sql
+
+SQL> @tz
+
+TZ_VERSION
+----------
+        32
+
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_32.dat              32          0
+
+
+GET_LATEST_TIMEZONE_VERSION
+---------------------------
+                         40
+
+
+PROPERTY_NAME                       VALUE
+----------------------------------- ------------
+DST_PRIMARY_TT_VERSION              32
+DST_SECONDARY_TT_VERSION            0
+DST_UPGRADE_STATE                   NONE
+
+SQL>
+SQL>
+SQL>
+SQL>
+SQL>
+SQL> !hostname -i
+fe80::250:56ff:fea0:15b6%ens192 10.194.50.150 192.168.122.1
+
+SQL>
+SQL>
+SQL> SHUTDOWN IMMEDIATE;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL>
+SQL>
+SQL> startup upgrade;
+ORACLE instance started.
+
+Total System Global Area 6291453576 bytes
+Fixed Size                  8939144 bytes
+Variable Size            3254779904 bytes
+Database Buffers         3019898880 bytes
+Redo Buffers                7835648 bytes
+Database mounted.
+Database opened.
+SQL>  DECLARE
+  l_tz_version PLS_INTEGER;
+BEGIN
+  l_tz_version := DBMS_DST.get_latest_timezone_version;
+
+  DBMS_OUTPUT.put_line('l_tz_version=' || l_tz_version);
+  DBMS_DST.begin_prepare(l_tz_version);
+END;
+/   2    3    4    5    6    7    8    9
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL> COLUMN property_name FORMAT A30
+COLUMN property_value FORMAT A20
+
+SELECT property_name, property_value
+FROM   database_properties
+WHERE  property_name LIKE 'DST_%'
+ORDER BY property_name;SQL> SQL> SQL>   2    3    4
+
+PROPERTY_NAME                  PROPERTY_VALUE
+------------------------------ --------------------
+DST_PRIMARY_TT_VERSION         32
+DST_SECONDARY_TT_VERSION       40
+DST_UPGRADE_STATE              PREPARE
+
+SQL>
+SQL>
+SQL> @tz
+
+TZ_VERSION
+----------
+        32
+
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_32.dat              32          0
+
+
+GET_LATEST_TIMEZONE_VERSION
+---------------------------
+                         40
+
+
+PROPERTY_NAME                       VALUE
+----------------------------------- ------------
+DST_PRIMARY_TT_VERSION              32
+DST_SECONDARY_TT_VERSION            40
+DST_UPGRADE_STATE                   PREPARE
+
+SQL>
+SQL>
+SQL> EXEC DBMS_DST.find_affected_tables;
+
+PL/SQL procedure successfully completed.
+
+SQL> select count(*) from sys.dst$affected_tables;
+
+  COUNT(*)
+----------
+         0
+
+SQL> select * from sys.dst$error_table;
+
+no rows selected
+
+SQL>  EXEC DBMS_DST.end_prepare;
+
+PL/SQL procedure successfully completed.
+
+SQL> SHUTDOWN IMMEDIATE;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup upgrade;
+ORACLE instance started.
+
+Total System Global Area 6291453576 bytes
+Fixed Size                  8939144 bytes
+Variable Size            3254779904 bytes
+Database Buffers         3019898880 bytes
+Redo Buffers                7835648 bytes
+Database mounted.
+Database opened.
+SQL> SET SERVEROUTPUT ON
+DECLARE
+  l_tz_version PLS_INTEGER;
+BEGIN
+  SELECT DBMS_DST.get_latest_timezone_version
+  INTO   l_tz_version
+  FROM   dual;
+  DBMS_OUTPUT.put_line('l_tz_version=' || l_tz_version);
+  DBMS_DST.begin_upgrade(l_tz_version);
+END;
+/SQL>   2    3    4    5    6    7    8    9   10
+l_tz_version=40
+An upgrade window has been successfully started.
+
+PL/SQL procedure successfully completed.
+
+SQL>
+SQL>
+SQL> shut immediate;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area 6291453576 bytes
+Fixed Size                  8939144 bytes
+Variable Size            3254779904 bytes
+Database Buffers         3019898880 bytes
+Redo Buffers                7835648 bytes
+Database mounted.
+Database opened.
+SQL> SET SERVEROUTPUT ON
+DECLARE
+l_failures   PLS_INTEGER;
+BEGIN
+DBMS_DST.upgrade_database(l_failures);
+DBMS_OUTPUT.put_line('DBMS_DST.upgrade_database : l_failures=' || l_failures);
+DBMS_DST.end_upgrade(l_failures);
+DBMS_OUTPUT.put_line('DBMS_DST.end_upgrade : l_failures=' || l_failures);
+END;
+ /SQL>   2    3    4    5    6    7    8    9
+Table list: "GSMADMIN_INTERNAL"."AQ$_CHANGE_LOG_QUEUE_TABLE_S"
+Number of failures: 0
+Table list: "GSMADMIN_INTERNAL"."AQ$_CHANGE_LOG_QUEUE_TABLE_L"
+Number of failures: 0
+Table list: "MDSYS"."SDO_DIAG_MESSAGES_TABLE"
+Number of failures: 0
+Table list: "DVSYS"."AUDIT_TRAIL$"
+Number of failures: 0
+Table list: "DVSYS"."SIMULATION_LOG$"
+Number of failures: 0
+DBMS_DST.upgrade_database : l_failures=0
+An upgrade window has been successfully ended.
+DBMS_DST.end_upgrade : l_failures=0
+
+PL/SQL procedure successfully completed.
+
+SQL> @tz
+
+TZ_VERSION
+----------
+        32
+
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_40.dat              40          0
+
+
+GET_LATEST_TIMEZONE_VERSION
+---------------------------
+                         40
+
+
+PROPERTY_NAME                       VALUE
+----------------------------------- ------------
+DST_PRIMARY_TT_VERSION              40
+DST_SECONDARY_TT_VERSION            0
+DST_UPGRADE_STATE                   NONE
+
+SQL>
+SQL>
+SQL>
+SQL> SELECT * FROM v$timezone_file;
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_40.dat              40          0
+
+SQL>
+SQL>
+SQL> get tz.sql
+  1  col PROPERTY_NAME for a35
+  2  col VALUE for a12
+  3  select tz_version from registry$database;
+  4  SELECT * FROM v$timezone_file;
+  5  SELECT DBMS_DST.get_latest_timezone_version FROM   dual;
+  6  SELECT PROPERTY_NAME, SUBSTR(property_value, 1, 30) value
+  7  FROM DATABASE_PROPERTIES
+  8  WHERE PROPERTY_NAME LIKE 'DST_%'
+  9* ORDER BY PROPERTY_NAME;
+ 10
+SQL>
+SQL>
+SQL> !vi tz.sql
+
+SQL> @tz
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_40.dat              40          0
+
+
+GET_LATEST_TIMEZONE_VERSION
+---------------------------
+                         40
+
+
+PROPERTY_NAME                       VALUE
+----------------------------------- ------------
+DST_PRIMARY_TT_VERSION              40
+DST_SECONDARY_TT_VERSION            0
+DST_UPGRADE_STATE                   NONE
+
+SQL>
+SQL>
+SQL> SELECT * FROM v$timezone_file;
+
+FILENAME                VERSION     CON_ID
+-------------------- ---------- ----------
+timezlrg_40.dat              40          0
+
+SQL>
+SQL>
+SQL> SELECT PROPERTY_NAME, SUBSTR(property_value, 1, 30) value
+FROM DATABASE_PROPERTIES
+WHERE PROPERTY_NAME LIKE 'DST_%'
+ORDER BY PROPERTY_NAME;
+  2    3    4
+PROPERTY_NAME                       VALUE
+----------------------------------- ------------
+DST_PRIMARY_TT_VERSION              40
+DST_SECONDARY_TT_VERSION            0
+DST_UPGRADE_STATE                   NONE
+
+SQL>
+SQL>
+SQL> SELECT DBMS_DST.get_latest_timezone_version FROM   dual;
+
+GET_LATEST_TIMEZONE_VERSION
+---------------------------
+                         40
+
+
 Get Archivelog Size:
 ----------------------
 
