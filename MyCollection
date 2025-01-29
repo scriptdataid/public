@@ -978,6 +978,42 @@ EXECUTE DBMS_SCHEDULER.DROP_JOB('SCHEMANAME.JOBNAME');
 Run a job immediately:
 EXECUTE DBMS_SCHEDULER.RUN_JOB('SCHEMANAME.JOBNAME');
 
+Enable all the DBMS Scheduler jobs:
+
+begin
+-- Use cursor to get list of scheduler jobs 
+for r in ( select job_name from dba_scheduler_jobs)
+loop
+dbms_scheduler.enable(name => r.job_name, force => true);
+end loop;
+end;
+/
+
+Disable all the DBMS Scheduler jobs:
+
+begin
+-- Use cursor to get list of scheduler jobs 
+for r in ( select job_name from dba_scheduler_jobs)
+loop
+dbms_scheduler.disable(name=> r.job_name, force => true);
+end loop;
+end;
+/
+
+-- Get DDL Of Scheduler Jobs:
+
+SQL> select dbms_metadata.get_ddl('PROCOBJ','CLEANUP_ONLINE_IND_BUILD','SYS') from dual;
+ERROR:
+ORA-31603: object "CLEANUP_ONLINE_IND_BUILD" of type PROCOBJ not found in schema "SYS"
+ORA-06512: at "SYS.DBMS_METADATA", line 6069
+ORA-06512: at "SYS.DBMS_METADATA", line 8666
+ORA-06512: at line 1
+
+-- For Non-SYS above will work fine , For SYS follow below workaround:
+
+exec dbms_scheduler.copy_job('SYS.CLEANUP_ONLINE_IND_BUILD','SOMEOTHERUSER.CLEANUP_ONLINE_IND_BUILD');
+select dbms_metadata.get_ddl('PROCOBJ','CLEANUP_ONLINE_IND_BUILD','SOMEOTHERUSER') from dual;
+
 Query_check export backup
 --------------------------
 set linesize 200
