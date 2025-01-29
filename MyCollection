@@ -963,6 +963,21 @@ exec sys.dbms_scheduler.stop_job('ORA$AT_OS_OPT_SY_2981');
 exec sys.dbms_scheduler.stop_job('ORA$AT_OS_OPT_SY_2981, 4213, SYS.TOP_CONSUMER');
 exec sys.dbms_scheduler.STOP_JOB(job_name=>'SYS.ORA$AT_SA_SPC_SY_37964', force=>true);
 
+Enable a dbms scheduler job:
+EXECUTE DBMS_SCHEDULER.ENABLE('SCHEMANAME.JOBNAME');
+
+Disable a DBMS Scheduler job:
+EXECUTE DBMS_SCHEDULER.DISABLE('SCHEMANAME.JOBNAME');
+
+Stop a running job:
+EXECUTE DBMS_SCHEDULER.STOP_JOB('SCHEMANAME.JOBNAME');
+
+Drop a running job:
+EXECUTE DBMS_SCHEDULER.DROP_JOB('SCHEMANAME.JOBNAME');
+
+Run a job immediately:
+EXECUTE DBMS_SCHEDULER.RUN_JOB('SCHEMANAME.JOBNAME');
+
 Query_check export backup
 --------------------------
 set linesize 200
