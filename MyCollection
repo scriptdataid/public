@@ -1,306 +1,3 @@
-SQL> @dbn
-
-NAME      DB_UNIQUE_NAME                 PROTECTION_MODE      OPEN_MODE            LOG_MODE     DATABASE_ROLE    STARTUP_T CURRENT_T HOST_NAME
---------- ------------------------------ -------------------- -------------------- ------------ ---------------- --------- --------- --------------------
-PRTMX01   PRTMX01                        MAXIMUM PERFORMANCE  READ WRITE           ARCHIVELOG   PRIMARY          14-MAR-24 14-MAR-24 MSILPETCSR17PR
-
-SQL> select tz_version from registry$database;
-
-TZ_VERSION
-----------
-        32
-
-SQL> !vi tz.sql
-
-SQL> @tz
-
-TZ_VERSION
-----------
-        32
-
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_32.dat              32          0
-
-
-GET_LATEST_TIMEZONE_VERSION
----------------------------
-                         40
-
-
-PROPERTY_NAME                       VALUE
------------------------------------ ------------
-DST_PRIMARY_TT_VERSION              32
-DST_SECONDARY_TT_VERSION            0
-DST_UPGRADE_STATE                   NONE
-
-SQL>
-SQL>
-SQL>
-SQL>
-SQL>
-SQL> !hostname -i
-fe80::250:56ff:fea0:15b6%ens192 10.194.50.150 192.168.122.1
-
-SQL>
-SQL>
-SQL> SHUTDOWN IMMEDIATE;
-Database closed.
-Database dismounted.
-ORACLE instance shut down.
-SQL>
-SQL>
-SQL> startup upgrade;
-ORACLE instance started.
-
-Total System Global Area 6291453576 bytes
-Fixed Size                  8939144 bytes
-Variable Size            3254779904 bytes
-Database Buffers         3019898880 bytes
-Redo Buffers                7835648 bytes
-Database mounted.
-Database opened.
-SQL>  DECLARE
-  l_tz_version PLS_INTEGER;
-BEGIN
-  l_tz_version := DBMS_DST.get_latest_timezone_version;
-
-  DBMS_OUTPUT.put_line('l_tz_version=' || l_tz_version);
-  DBMS_DST.begin_prepare(l_tz_version);
-END;
-/   2    3    4    5    6    7    8    9
-
-PL/SQL procedure successfully completed.
-
-SQL>
-SQL> COLUMN property_name FORMAT A30
-COLUMN property_value FORMAT A20
-
-SELECT property_name, property_value
-FROM   database_properties
-WHERE  property_name LIKE 'DST_%'
-ORDER BY property_name;SQL> SQL> SQL>   2    3    4
-
-PROPERTY_NAME                  PROPERTY_VALUE
------------------------------- --------------------
-DST_PRIMARY_TT_VERSION         32
-DST_SECONDARY_TT_VERSION       40
-DST_UPGRADE_STATE              PREPARE
-
-SQL>
-SQL>
-SQL> @tz
-
-TZ_VERSION
-----------
-        32
-
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_32.dat              32          0
-
-
-GET_LATEST_TIMEZONE_VERSION
----------------------------
-                         40
-
-
-PROPERTY_NAME                       VALUE
------------------------------------ ------------
-DST_PRIMARY_TT_VERSION              32
-DST_SECONDARY_TT_VERSION            40
-DST_UPGRADE_STATE                   PREPARE
-
-SQL>
-SQL>
-SQL> EXEC DBMS_DST.find_affected_tables;
-
-PL/SQL procedure successfully completed.
-
-SQL> select count(*) from sys.dst$affected_tables;
-
-  COUNT(*)
-----------
-         0
-
-SQL> select * from sys.dst$error_table;
-
-no rows selected
-
-SQL>  EXEC DBMS_DST.end_prepare;
-
-PL/SQL procedure successfully completed.
-
-SQL> SHUTDOWN IMMEDIATE;
-Database closed.
-Database dismounted.
-ORACLE instance shut down.
-SQL> startup upgrade;
-ORACLE instance started.
-
-Total System Global Area 6291453576 bytes
-Fixed Size                  8939144 bytes
-Variable Size            3254779904 bytes
-Database Buffers         3019898880 bytes
-Redo Buffers                7835648 bytes
-Database mounted.
-Database opened.
-SQL> SET SERVEROUTPUT ON
-DECLARE
-  l_tz_version PLS_INTEGER;
-BEGIN
-  SELECT DBMS_DST.get_latest_timezone_version
-  INTO   l_tz_version
-  FROM   dual;
-  DBMS_OUTPUT.put_line('l_tz_version=' || l_tz_version);
-  DBMS_DST.begin_upgrade(l_tz_version);
-END;
-/SQL>   2    3    4    5    6    7    8    9   10
-l_tz_version=40
-An upgrade window has been successfully started.
-
-PL/SQL procedure successfully completed.
-
-SQL>
-SQL>
-SQL> shut immediate;
-Database closed.
-Database dismounted.
-ORACLE instance shut down.
-SQL> startup
-ORACLE instance started.
-
-Total System Global Area 6291453576 bytes
-Fixed Size                  8939144 bytes
-Variable Size            3254779904 bytes
-Database Buffers         3019898880 bytes
-Redo Buffers                7835648 bytes
-Database mounted.
-Database opened.
-SQL> SET SERVEROUTPUT ON
-DECLARE
-l_failures   PLS_INTEGER;
-BEGIN
-DBMS_DST.upgrade_database(l_failures);
-DBMS_OUTPUT.put_line('DBMS_DST.upgrade_database : l_failures=' || l_failures);
-DBMS_DST.end_upgrade(l_failures);
-DBMS_OUTPUT.put_line('DBMS_DST.end_upgrade : l_failures=' || l_failures);
-END;
- /SQL>   2    3    4    5    6    7    8    9
-Table list: "GSMADMIN_INTERNAL"."AQ$_CHANGE_LOG_QUEUE_TABLE_S"
-Number of failures: 0
-Table list: "GSMADMIN_INTERNAL"."AQ$_CHANGE_LOG_QUEUE_TABLE_L"
-Number of failures: 0
-Table list: "MDSYS"."SDO_DIAG_MESSAGES_TABLE"
-Number of failures: 0
-Table list: "DVSYS"."AUDIT_TRAIL$"
-Number of failures: 0
-Table list: "DVSYS"."SIMULATION_LOG$"
-Number of failures: 0
-DBMS_DST.upgrade_database : l_failures=0
-An upgrade window has been successfully ended.
-DBMS_DST.end_upgrade : l_failures=0
-
-PL/SQL procedure successfully completed.
-
-SQL> @tz
-
-TZ_VERSION
-----------
-        32
-
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_40.dat              40          0
-
-
-GET_LATEST_TIMEZONE_VERSION
----------------------------
-                         40
-
-
-PROPERTY_NAME                       VALUE
------------------------------------ ------------
-DST_PRIMARY_TT_VERSION              40
-DST_SECONDARY_TT_VERSION            0
-DST_UPGRADE_STATE                   NONE
-
-SQL>
-SQL>
-SQL>
-SQL> SELECT * FROM v$timezone_file;
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_40.dat              40          0
-
-SQL>
-SQL>
-SQL> get tz.sql
-  1  col PROPERTY_NAME for a35
-  2  col VALUE for a12
-  3  select tz_version from registry$database;
-  4  SELECT * FROM v$timezone_file;
-  5  SELECT DBMS_DST.get_latest_timezone_version FROM   dual;
-  6  SELECT PROPERTY_NAME, SUBSTR(property_value, 1, 30) value
-  7  FROM DATABASE_PROPERTIES
-  8  WHERE PROPERTY_NAME LIKE 'DST_%'
-  9* ORDER BY PROPERTY_NAME;
- 10
-SQL>
-SQL>
-SQL> !vi tz.sql
-
-SQL> @tz
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_40.dat              40          0
-
-
-GET_LATEST_TIMEZONE_VERSION
----------------------------
-                         40
-
-
-PROPERTY_NAME                       VALUE
------------------------------------ ------------
-DST_PRIMARY_TT_VERSION              40
-DST_SECONDARY_TT_VERSION            0
-DST_UPGRADE_STATE                   NONE
-
-SQL>
-SQL>
-SQL> SELECT * FROM v$timezone_file;
-
-FILENAME                VERSION     CON_ID
--------------------- ---------- ----------
-timezlrg_40.dat              40          0
-
-SQL>
-SQL>
-SQL> SELECT PROPERTY_NAME, SUBSTR(property_value, 1, 30) value
-FROM DATABASE_PROPERTIES
-WHERE PROPERTY_NAME LIKE 'DST_%'
-ORDER BY PROPERTY_NAME;
-  2    3    4
-PROPERTY_NAME                       VALUE
------------------------------------ ------------
-DST_PRIMARY_TT_VERSION              40
-DST_SECONDARY_TT_VERSION            0
-DST_UPGRADE_STATE                   NONE
-
-SQL>
-SQL>
-SQL> SELECT DBMS_DST.get_latest_timezone_version FROM   dual;
-
-GET_LATEST_TIMEZONE_VERSION
----------------------------
-                         40
-
 
 Get Archivelog Size:
 ----------------------
@@ -420,12 +117,6 @@ SELECT table_name, column_name, segment_name, round(a.bytes/1024/1024),a.tablesp
 SELECT index_name, segment_name, round(a.bytes/1024/1024),a.tablespace_name FROM dba_segments a JOIN dba_lobs b USING (owner, segment_name) WHERE b.table_name ='&tab' order by 2,1
 SELECT table_name,sum(a.bytes)/1024/1024/1024  FROM dba_segments a JOIN dba_lobs b USING (owner, segment_name) WHERE b.table_name ='&LOB_TABLE_NAME';
 
-Parallel_Session_Level:
-========================
-
-alter session enable  parallel dml;
-alter session force parallel ddl parallel 6;
-
 ASM Related
 -------------------
 
@@ -469,6 +160,7 @@ select a.name DiskGroup,b.name DiskName, b.total_mb, b.free_mb,b.path, b.header_
 from v$asm_disk b,v$asm_diskgroup a 
 where a.group_number(+)=b.group_number 
 order by b.group_number,b.name;
+
 User/Schema Only
 ===================
 
@@ -478,61 +170,6 @@ where ACCOUNT_STATUS='OPEN'
 and REGEXP_LIKE (USERNAME,'^[a-zA-Z_]*$') 
 and EXPIRY_DATE between sysdate and sysdate+7 
 order by EXPIRY_DATE;
-Pass_reset
-===============
-
-In 10g:
-SELECT 'ALTER USER '||username||' IDENTIFIED BY VALUES '''||password||'';' end FROM dba_users
-where username='&username';
-
-Onward 11g:
-SELECT 'ALTER USER '||a.username||' IDENTIFIED BY VALUES '''||b.spare4||''';'  FROM dba_users a,sys.user$ b WHERE b.name = a.username
-and a.username='&username';
-
-Pass_reset_check in 12c
-=========================
-set serveroutput on veri off feed off
- declare
-   user dba_users.username%type;
-   old_profile dba_users.profile%type;
-   old_password USER$.SPARE4%type;
- begin
-  user :=upper('&username');
- select profile into old_profile from dba_users where username=user;
- select SPARE4 into old_password from user$ where name=user;
- execute immediate 'alter user '||user||' profile default';
- execute immediate 'alter user '||user||' identified by values '||chr(39)||old_password||chr(39);
- execute immediate 'alter user '||user||' profile '||old_profile;
- execute immediate 'alter user '||user||' account unlock';
- dbms_output.put_line('Password of '||user||' has been reset successfully...');
- exception when others then
- dbms_output.put_line('Error Occurred!!!!');
- end;
-/
-set veri on feed on
-
-passreset.sql
-
-set serveroutput on veri off feed off
- declare
-   user dba_users.username%type;
-   old_profile dba_users.profile%type;
-   old_password USER$.password%type;
- begin
-  user :=upper('&username');
- select profile into old_profile from dba_users where username=user;
- select SPARE4 into old_password from user$ where name=user;
- execute immediate 'alter user '||user||' profile default';
- execute immediate 'alter user '||user||' identified by values '||chr(39)||old_password||chr(39);
- execute immediate 'alter user '||user||' profile '||old_profile;
- execute immediate 'alter user '||user||' account unlock';
- dbms_output.put_line('Password of '||user||' has been reset successfully...');
- exception when others then
- dbms_output.put_line('Error Occurred!!!!');
- end;
-/
-set veri on feed on
-
 
 Undo retention
 ================
@@ -647,263 +284,6 @@ WHERE e.name = 'undo_retention'
 AND f.name = 'db_block_size';
 /
 
-Locking script
-==================
-col USERNAME for a10
-col EVENT for a35
-col SESS for a20
-set lines 200 pages 2000
-col osuser for a10
-col PROGRAM for a20
-SELECT DECODE(request,0,'Holder: ','  Waiter: ')||l.sid sess,l.id1,l.id2, l.lmode,s.osuser,s.username,s.logon_time,s.program,s.client_info,l.request, l.type,s.sql_id,s.status,s.last_call_et/60 "ET_Min",s.event
-FROM V$LOCK L,v$session s
-WHERE (l.id1,l.id2, l.type) IN    (SELECT id1, id2, type FROM V$LOCK WHERE request>0)
-and l.sid=s.sid
-ORDER BY l.id1,l.request;
-
-Suggested_Alerts
-======================
-
-col REASON for a55
-col OBJECT_TYPE for a14
-col SUGGESTED_ACTION for a35
-col CREATION_TIME for a36
-set lines 200 pages 999
-select CREATION_TIME,INSTANCE_NAME,object_type,message_type,message_level,reason,suggested_action
-from dba_outstanding_alerts
-order by CREATION_TIME;
-
-ACLs
-
--- -----------------------------------------------------------------------------------
--- File Name    : https://oracle-base.com/dba/11g/network_acls_ddl.sql
--- Author       : Tim Hall
--- Description  : Displays DDL for all network ACLs.
--- Requirements : Access to the DBA views.
--- Call Syntax  : @network_acls_ddl
--- Last Modified: 28-JUL-2017
--- -----------------------------------------------------------------------------------
-
-SET SERVEROUTPUT ON FORMAT WRAPPED LINESIZE 300
-DECLARE
-  l_last_acl       dba_network_acls.acl%TYPE                 := '~';
-  l_last_principal dba_network_acl_privileges.principal%TYPE := '~';
-  l_last_privilege dba_network_acl_privileges.privilege%TYPE := '~';
-  l_last_host      dba_network_acls.host%TYPE                := '~';
-
-  FUNCTION get_timestamp (p_timestamp IN TIMESTAMP WITH TIME ZONE)
-    RETURN VARCHAR2
-  AS
-    l_return  VARCHAR2(32767);
-  BEGIN
-    IF p_timestamp IS NULL THEN
-      RETURN 'NULL';
-    END IF;
-    RETURN 'TO_TIMESTAMP_TZ(''' || TO_CHAR(p_timestamp, 'DD-MON-YYYY HH24:MI:SS.FF TZH:TZM') || ''',''DD-MON-YYYY HH24:MI:SS.FF TZH:TZM'')';
-  END;
-BEGIN
-  FOR i IN (SELECT a.acl,
-                   a.host,
-                   a.lower_port,
-                   a.upper_port,
-                   b.principal,
-                   b.privilege,
-                   b.is_grant,
-                   b.start_date,
-                   b.end_date
-            FROM   dba_network_acls a
-                   JOIN dba_network_acl_privileges b ON a.acl = b.acl
-            ORDER BY a.acl, a.host, a.lower_port, a.upper_port)
-  LOOP
-    IF l_last_acl <> i.acl THEN
-      -- First time we've seen this ACL, so create a new one.
-      l_last_host := '~';
-
-      DBMS_OUTPUT.put_line('-- -------------------------------------------------');
-      DBMS_OUTPUT.put_line('-- ' || i.acl);
-      DBMS_OUTPUT.put_line('-- -------------------------------------------------');
-      DBMS_OUTPUT.put_line('BEGIN');
-      DBMS_OUTPUT.put_line('  DBMS_NETWORK_ACL_ADMIN.drop_acl (');
-      DBMS_OUTPUT.put_line('    acl          => ''' || i.acl || ''');');
-      DBMS_OUTPUT.put_line('  COMMIT;');
-      DBMS_OUTPUT.put_line('END;');
-      DBMS_OUTPUT.put_line('/');
-      DBMS_OUTPUT.put_line(' ');
-      DBMS_OUTPUT.put_line('BEGIN');
-      DBMS_OUTPUT.put_line('  DBMS_NETWORK_ACL_ADMIN.create_acl (');
-      DBMS_OUTPUT.put_line('    acl          => ''' || i.acl || ''',');
-      DBMS_OUTPUT.put_line('    description  => ''' || i.acl || ''',');
-      DBMS_OUTPUT.put_line('    principal    => ''' || i.principal || ''',');
-      DBMS_OUTPUT.put_line('    is_grant     => ' || i.is_grant || ',');
-      DBMS_OUTPUT.put_line('    privilege    => ''' || i.privilege || ''',');
-      DBMS_OUTPUT.put_line('    start_date   => ' || get_timestamp(i.start_date) || ',');
-      DBMS_OUTPUT.put_line('    end_date     => ' || get_timestamp(i.end_date) || ');');
-      DBMS_OUTPUT.put_line('  COMMIT;');
-      DBMS_OUTPUT.put_line('END;');
-      DBMS_OUTPUT.put_line('/');
-      DBMS_OUTPUT.put_line(' ');
-      l_last_acl := i.acl;
-      l_last_principal := i.principal;
-      l_last_privilege := i.privilege;
-    END IF;
-
-    IF l_last_principal <> i.principal
-    OR (l_last_principal = i.principal AND l_last_privilege <> i.privilege) THEN
-      -- Add another principal to an existing ACL.
-      DBMS_OUTPUT.put_line('BEGIN');
-      DBMS_OUTPUT.put_line('  DBMS_NETWORK_ACL_ADMIN.add_privilege (');
-      DBMS_OUTPUT.put_line('    acl       => ''' || i.acl || ''',');
-      DBMS_OUTPUT.put_line('    principal => ''' || i.principal || ''',');
-      DBMS_OUTPUT.put_line('    is_grant  => ' || i.is_grant || ',');
-      DBMS_OUTPUT.put_line('    privilege => ''' || i.privilege || ''',');
-      DBMS_OUTPUT.put_line('    start_date   => ' || get_timestamp(i.start_date) || ',');
-      DBMS_OUTPUT.put_line('    end_date     => ' || get_timestamp(i.end_date) || ');');
-      DBMS_OUTPUT.put_line('  COMMIT;');
-      DBMS_OUTPUT.put_line('END;');
-      DBMS_OUTPUT.put_line('/');
-      DBMS_OUTPUT.put_line(' ');
-      l_last_principal := i.principal;
-      l_last_privilege := i.privilege;
-    END IF;
-
-    IF l_last_host <> i.host||':'||i.lower_port||':'||i.upper_port THEN
-      DBMS_OUTPUT.put_line('BEGIN');
-      DBMS_OUTPUT.put_line('  DBMS_NETWORK_ACL_ADMIN.assign_acl (');
-      DBMS_OUTPUT.put_line('    acl         => ''' || i.acl || ''',');
-      DBMS_OUTPUT.put_line('    host        => ''' || i.host || ''',');
-      DBMS_OUTPUT.put_line('    lower_port  => ' || NVL(TO_CHAR(i.lower_port),'NULL') || ',');
-      DBMS_OUTPUT.put_line('    upper_port  => ' || NVL(TO_CHAR(i.upper_port),'NULL') || ');');
-      DBMS_OUTPUT.put_line('  COMMIT;');
-      DBMS_OUTPUT.put_line('END;');
-      DBMS_OUTPUT.put_line('/');
-      DBMS_OUTPUT.put_line(' ');
-      l_last_host := i.host||':'||i.lower_port||':'||i.upper_port;
-    END IF;
-  END LOOP;
-END;
-/
-
-
-
-For fine-grained access control, We are using three dimensions:
-(1) which users – Principals
-(2) perform which operations – Privileges
-(3) on which data – Objects
-
-Check the ACL permission present in Oracle
-
-COL ACL_OWNER FOR A12
-COL ACL FOR A67
-COL HOST FOR A34
-col PRINCIPAL for a20
-col PRIVILEGE for a13
-select ACL_OWNER,ACL,HOST,LOWER_PORT,UPPER_PORT FROM dba_network_acls;
-select * FROM dba_network_acls;
-select ACL_OWNER,ACL,PRINCIPAL,PRIVILEGE from dba_network_acl_privileges;
-select * from dba_network_acl_privileges where principal='6037873';
-
-Syntax for Creating ACL Commands
-
-Syntax of creating the ACL
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL (
-acl => "file_name.xml",
-host => "network_host",
-lower_port => null|port_number,
-upper_port => null|port_number);
-END;
-----Example:
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL (
-acl => 'test.xml',
-host => 'www.google.com',
-lower_port => 80,
-upper_port => 1000);
-END;
-/
-Commit;
-
-Example of Creating and checking the ACL permissions by different methods present in DBMS_NETWORK_ACL_ADMIN package
-You can do it with one command as show above or separates commands as shown below:
-1. Create an ACL and define Connect permission to Scott.
-
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.CREATE_ACL
-(acl => 'www.xml', ---filename of ACL file saved as .xml Extension
-description => 'WWW ACL', --- Put the description of ACL
-principal => 'SCOTT', --- Username for access
-is_grant => true,
-privilege => 'connect'); ---Permission or privileges
-END;
-/
-commit;
-
-2. Later add more privileges to user HR in created ACL
-
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.ADD_PRIVILEGE(acl => 'www.xml',
-principal => 'HR',
-is_grant => true,
-privilege => 'resolve');
-END;
-/
-commit;
-
-3. Assign a URL to ACL created.
-
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.ASSIGN_ACL(acl => 'www.xml',
-host => 'www.oracle.com');
-END;
-/
-COMMIT;
-
-4. Check the ACL permissions assigned to Scott.
-
-SELECT host, lower_port, upper_port, acl,
-DECODE(
-DBMS_NETWORK_ACL_ADMIN.CHECK_PRIVILEGE_ACLID(aclid, 'SCOTT', 'connect'),
-1, 'GRANTED', 0, 'DENIED', null) privilege
-FROM dba_network_acls
-WHERE host IN
-(SELECT * FROM
-TABLE(DBMS_NETWORK_ACL_UTILITY.DOMAINS('www.oracle.com')))
-ORDER BY DBMS_NETWORK_ACL_UTLITITY.DOMAIN_LEVEL(host) desc, lower_port,upper_port;
-
-5. Unassign the privileges from http://www.oracle.com
-
-BEGIN
-DBMS_NETWORK_ACL_ADMIN.UNASSIGN_ACL(host => 'www.us.oracle.com');
-END;
-/
-Commit;
-	
-Copyright (c) 2024, Oracle. All rights reserved. Oracle Confidential.
-
-
-Click to add to Favorites		Export and Import ACLs using expdp/impdp (Doc ID 2483123.1)	To BottomTo Bottom	
-
-In this Document
-Goal
-Solution
-
-APPLIES TO:
-Oracle Database - Enterprise Edition - Version 12.1.0.2 and later
-Information in this document applies to any platform.
-GOAL
- How to export and import ACLs when performing a full database export/import?
-
-SOLUTION
-Starting from 12c,we can also export ACLs using INCLUDE=NETWORK_ACL parameter of expdp command:
-
-expdp <user/password> directory=DATA_PUMP_DIR logfile=log_export_network_acl.log dumpfile=export_network_acl.dmp full=y include=NETWORK_ACL
-
-expdp / directory=EXPORTS dumpfile=exp_network_acl.dmp logfile=exp_network_acl.log reuse_dumpfiles=yes full=y include=NETWORK_ACL
-
-impdp <user/password> directory=DATA_PUMP_DIR logfile=log_import_network_acl.log dumpfile=export_network_acl.dmp 
-
-This feature does not exist in 11g.
-
 SQLNET Parameters
 ======================
 
@@ -918,18 +298,6 @@ Password_File:
  col LAST_LOGIN for a20
  col ACCOUNT_STATUS for a20
  select * from V$PWFILE_USERS;
-
-DB_LINK
-================
-
-create or replace procedure USER.proc_db_lnk_create ( Lnk_name varchar2,uname varchar2, passwd varchar2, tns_string varchar2)
-is
-begin
-execute immediate 'create database link '||Lnk_name ||' connect to '||uname||' identified by values '||passwd ||' using '''||tns_string||'''';
-end;
-/
-
-exec USER.PROC_DB_LNK_CREATE('DBLINKNAME','DBLINKUSER','''05225DECAFFFCFC27070648B6C847814E9EF5A3CF673812FBA''','REMOTESERVERTNS');
 
 Scheduler Jobs
 ----------------------------
@@ -1538,65 +906,6 @@ Tkprof
 !tkprof /ora11g/oracle/diag/rdbms/prod/PROD/trace/PROD_ora_6588.trc /ora11g/oracle/diag/rdbms/prod/PROD/trace/PROD_ora_6588.trc.txt sys=no sort='(exeela,fchela)'
 !tkprof /ora11g/oracle/diag/rdbms/prod/PROD/trace/PROD_ora_6588.trc /ora11g/oracle/diag/rdbms/prod/PROD/trace/PROD_ora_6588.trc.txt explain=system/orafinsr3 sort='(prsela,exeela,fchela)'
 
-Mview_Refresh Time
-=====================
-MSPR_STRX
-
-col QUERY for a45
-SELECT 
-   mview_name,
-   last_refresh_date "START_TIME",
-   CASE
-      WHEN fullrefreshtim <> 0 THEN
-         LAST_REFRESH_DATE + fullrefreshtim/60/60/24
-      WHEN increfreshtim <> 0 THEN
-         LAST_REFRESH_DATE + increfreshtim/60/60/24
-      ELSE
-         LAST_REFRESH_DATE
-   END "END_TIME",
-   fullrefreshtim,
-   increfreshtim,UNUSABLE,INVALID,QUERY
-FROM dba_mview_analysis
-WHERE mview_name='&mview';
-
-select sid,osuser,username,program,CLIENT_INFO,sql_id,prev_sql_id,logon_time,event from v$session where type <> 'BACKGROUND'
-and status='ACTIVE'
-and program like '%SR3%';
-
-Mview_refresh
-=============
-
-SELECT 
-   mview_name,
-   last_refresh_date "START_TIME",
-   CASE
-      WHEN fullrefreshtim <> 0 THEN
-         LAST_REFRESH_DATE + fullrefreshtim/60/60/24
-      WHEN increfreshtim <> 0 THEN
-         LAST_REFRESH_DATE + increfreshtim/60/60/24
-      ELSE
-         LAST_REFRESH_DATE
-   END "END_TIME",
-   fullrefreshtim,
-   increfreshtim
-FROM all_mview_analysis
-WHERE owner='MAT' and mview_name='MMAT_ICEB_PART_MV';
-
-Current MVIEW Refresh in Progress
-====================================
-
-column owner format a15
-column RUN_USER format a10
-column mview format a15
-select o.owner, o.object_name mview, username RUN_USER,s.sql_id, s.sid,to_char(s.logon_time,'DD-MM-YY HH24:MI:SS') LOGON_TIME,s.last_call_et/60 "ET_Min",mva.fullrefreshtim/60 REF_MIN,s.event
-from v$lock l, dba_objects o, v$session s,dba_mview_analysis mva
-where o.object_id=l.id1 and
-l.type='JI' and
-l.lmode=6 and
-s.sid=l.sid and
-o.object_name=mva.mview_name and
-o.object_type='TABLE';
-
 Refresh Mview
 =====================
 
@@ -1757,11 +1066,9 @@ i:=DBMS_SPM.DROP_SQL_PLAN_BASELINE('SQL_45b9e9f1e25dbb81','SQL_PLAN_4bfg9y7j5vfw
 End;
 /
 
-
 SELECT sql_handle, plan_name, enabled, accepted 
 FROM   dba_sql_plan_baselines
 WHERE  sql_handle = 'SYS_SQL_7b76323ad90440b9';
-
 
 To delete all the unaccepted plans run please check the code
 ------------------------------------------------------------------
@@ -1776,7 +1083,6 @@ BEGIN
    END LOOP;
 END;
 /
-
 
 sqlplan
 =====================
@@ -1826,7 +1132,6 @@ EXEC DBMS_STATS.gather_table_stats('HR','EMPLOYEES',cascade=>TRUE);
 
 EXEC DBMS_STATS.gather_index_stats('HR','EMPLOYEES_PK');
 EXEC DBMS_STATS.gather_schema_stats('SCOTT');
-
 
 EXEC DBMS_STATS.gather_database_stats;
 EXEC DBMS_STATS.gather_dictionary_stats;
@@ -2582,7 +1887,6 @@ and p.background is null
 and s.sid in
 (select distinct session_id from v$locked_object);
 
-
 Object Level
 ===============
 
@@ -2634,8 +1938,6 @@ and s.address = b.sql_address and s.hash_value = b.sql_hash_value
 and s.piece = 1
 ;
 
-
-MMAT_PROC
 select '-- '||s.schemaname Schema,'alter system kill session '||''''||s.sid||','||s.serial#||''' immediate;' db_session,'!kill -9 '||p.spid OS_Process  
 from v$session s,v$process p 
 where p.addr=s.paddr 
@@ -3770,23 +3072,6 @@ and substr(a.ksppinm,1,1) = '_'
 and lower(a.ksppinm) like '%&hidden_parameter%'
 order by ksppinm;
 
-Running Proc / Pack
-=================================
-
-alter session set nls_date_format='DD-MM-YY HH24:MI:SS';
-col OBJECT_NAME for a35
-select 'CALLED PLSQL', vs.username, d_o.object_name,vs.sid,vs.serial#,vs.event,logon_time,vs.LAST_CALL_ET/60 "ET_Min"
-  from dba_objects d_o
-       inner join
-       v$session vs
-          on d_o.object_id = vs.plsql_entry_object_id
-union all
-select 'CURRENT PLSQL', vs.username, d_o.object_name,vs.sid,vs.serial#,vs.event,logon_time,vs.LAST_CALL_ET/60 "ET_Min"
-  from dba_objects d_o
-       inner join
-       v$session vs
-          on d_o.object_id = vs.plsql_object_id;
-
 ################################################################################################################################################
 Tablespace specific queries
 ################################################################################################################################################
@@ -4022,141 +3307,6 @@ FROM dba_data_files a,
 WHERE a.file_id = b.file_id
 and a.tablespace_name='&Tablespace'
 order by file_name;
-
-################################################################################################################################################
-Parent/Child Tables specific queries
-################################################################################################################################################
-
-Get Constraint of Table
--------------------------------------
-
-col R_OWNER for a10
-col INDEX_OWNER for a10 head I_OWNER
-col INDEX_NAME for a12
-col TABLE_NAME for a12
-select TABLE_NAME,OWNER,CONSTRAINT_TYPE,R_OWNER,R_CONSTRAINT_NAME,DELETE_RULE,STATUS,DEFERRABLE,DEFERRED,VALIDATED,INDEX_OWNER,INDEX_NAME,INVALID 
-from dba_constraints
-where table_name='&TABLE'
-order by owner;
-
-Count of User Child Tables on Database
-----------------------------------------
-
-SELECT
-      p.owner parent_owner,
-      p.table_name Parent_table,
-      count(*) as Child_tables
-  FROM
-      dba_constraints p, dba_constraints c
-  where
-  p.owner not in ('SYS','SYSTEM','SYSMAN','ORDDATA','OLAPSYS','MDSYS','EXFSYS','APEX_030200','CTXSYS','DBSNMP','FLOWS_FILES')
-  and p.constraint_type IN ('P','U')
-  and c.constraint_type='R'
-  and p.owner=c.r_owner
-  and p.constraint_name=c.r_constraint_name
-group by p.owner,p.table_name
-order by 1,3;
-
-Check ALL Parent/Child Tables of Any schema
-----------------------------------------------
-
-SELECT
-      p.owner parent_owner,
-      c.owner child_owner,
-      p.table_name Parent_table,
-      p.constraint_name parent_cons_name,
-      c.table_name Child_table,
-      c.constraint_name child_cons_name
-  FROM
-      dba_constraints p, dba_constraints c
-  where p.owner='&parent_Owner'
-  and p.constraint_type IN ('P','U')
-  and c.constraint_type='R'
-  and p.owner=c.r_owner
-  and p.constraint_name=c.r_constraint_name
-order by 3;
-
-Get Child Table details from Parent Table
-------------------------------------------------
-
-col COLUMN_NAME for a20
-col TABLE_OWNER for a10 head T_OWNER
-col CHILD_TABLE for a12
-SELECT c.table_owner,a.table_name,c.column_name, b.table_name AS CHILD_TABLE, d.column_name, b.R_CONSTRAINT_NAME 
-FROM dba_constraints a, dba_constraints b, dba_ind_columns c, dba_cons_columns d 
-WHERE a.constraint_type = 'P' 
-AND a.CONSTRAINT_NAME = b.R_CONSTRAINT_NAME 
-AND b.CONSTRAINT_TYPE = 'R' 
-AND a.table_name = c.table_name 
-AND a.constraint_name = c.index_name 
-AND b.CONSTRAINT_NAME = d.constraint_name 
-AND a.table_name = '&ParentTable';
-
-col CONSTRAINT_NAME for a35
-SELECT c.table_owner Parent_owner,a.table_name,c.column_name, b.owner child_owner,b.table_name AS CHILD_TABLE, d.column_name, b.CONSTRAINT_NAME,b.R_CONSTRAINT_NAME 
-FROM dba_constraints a, dba_constraints b, dba_ind_columns c, dba_cons_columns d 
-WHERE a.constraint_type in ('P' ,'U')
-AND a.CONSTRAINT_NAME = b.R_CONSTRAINT_NAME 
-AND b.CONSTRAINT_TYPE = 'R' 
-AND a.table_name = c.table_name 
-AND a.constraint_name = c.index_name 
-AND b.CONSTRAINT_NAME = d.constraint_name 
-AND a.table_name = '&ParentTable';
-
-Check Best Details on Parent/Child Tables
-------------------------------------------------
-
-SET LINES 300 VERIFY OFF
-col parent_owner format A13
-col child_owner format A13
-col parent_table format A25
-col child_table format A15
-col parent_cons_name format A25
-col child_cons_name format A25
-SELECT
-      p.owner parent_owner,
-      c.owner child_owner,
-      p.table_name Parent_table,
-      p.constraint_name parent_cons_name,
-      c.table_name Child_table,
-      c.constraint_name child_cons_name
-  FROM
-      dba_constraints p, dba_constraints c
-  where p.owner='&parent_Owner'
-  and p.table_name='&Parent_Table_Name'
-  and p.constraint_type IN ('P','U')
-  and c.constraint_type='R'
-  and p.owner=c.r_owner
-  and p.constraint_name=c.r_constraint_name
-order by 4;
-
-
-ALL Parent/Child tables in database
--------------------------------------------
-
-SET LINES 300 VERIFY OFF
-col parent_owner format A13
-col child_owner format A13
-col parent_table format A37
-col child_table format A40
-col parent_cons_name format A40
-col child_cons_name format A40
-SELECT
-      p.owner parent_owner,
-      c.owner child_owner,
-      p.table_name Parent_table,
-      p.constraint_name parent_cons_name,
-      c.table_name Child_table,
-      c.constraint_name child_cons_name
-  FROM
-      dba_constraints p, dba_constraints c
-  where
-  p.owner not in ('SYS','SYSTEM','SYSMAN','ORDDATA','OLAPSYS','MDSYS','EXFSYS','APEX_030200','CTXSYS','DBSNMP','FLOWS_FILES')
-  and p.constraint_type IN ('P','U')
-  and c.constraint_type='R'
-  and p.owner=c.r_owner
-  and p.constraint_name=c.r_constraint_name
-order by 1,3;
 
 ###########################################################################################################################################
 DataPump Specific
@@ -4698,28 +3848,3 @@ find . -name "20051008*" -print -exec rm {} \;
 
 for i in *.trm; do rm "$i"; done
 for i in *.trc; do du -sk "$i"; done
-
-Arc Apply:
-========================
-apl.sql
-
-recover standby database;
-auto
-exit
-
-apl.sh
-chmod 775 apl.sh
-ls -ltr apl.sh
-
-while true; do
-sqlplus / as sysdba @apl.sql
-sleep 1800
-done
-
-Windows
---------------------------
-Dumps:
-
-C:\Windows\Minidump
-pushd
-popd
