@@ -3457,6 +3457,27 @@ round(SPACE_RECLAIMABLE/1024/1024/1024,2) "SPACE_RECLAIMABLE (GB)" ,
 from V$FLASHBACK_DATABASE_LOG) "Estimated Space (GB)"
 from V$RECOVERY_FILE_DEST;
 
+Param Change History
+====================
+
+set mark csv on
+SELECT 
+    p.snap_id,
+    s.begin_interval_time,
+    p.parameter_name,
+    p.value,
+    p.isdefault,
+    p.ismodified
+FROM 
+    dba_hist_parameter p
+JOIN 
+    dba_hist_snapshot s
+ON 
+    p.snap_id = s.snap_id
+WHERE 
+    p.ismodified <> 'FALSE' and s.begin_interval_time >= sysdate - 30
+ORDER BY 
+    s.begin_interval_time, p.parameter_name;
 
 ###########################################################################################################################################
 EBS
